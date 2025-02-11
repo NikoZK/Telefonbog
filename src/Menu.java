@@ -7,8 +7,8 @@ import java.sql.ResultSet;
 public class Menu {
     private Scanner scanner = new Scanner(System.in);
 
-
-    public Menu(){}
+    public Menu() {
+    }
 
     public void OpretNummer() {
         while (true) {
@@ -16,7 +16,9 @@ public class Menu {
             System.out.println("Tryk 1 for at tilføje et telefon nummer");
             System.out.println("Tryk 2 for at se numre");
             System.out.println("Tryk 3 for at søge");
-            System.out.println("Tryk 4 for at afslutte");
+            System.out.println("Tryk 4 for at slette nummer");
+            System.out.println("Tryk 5 for at ændre nummer");
+            System.out.println("Tryk 0 for at afslutte");
             int valg = scanner.nextInt();
             scanner.nextLine();
 
@@ -40,8 +42,16 @@ public class Menu {
                     String searchQuery = scanner.nextLine();
                     soegContacts(searchQuery);
                     break;
-
                 case 4:
+                    System.out.println("Indtast nummeret på personen du vil slette");
+                    int deleteNumber = scanner.nextInt();
+                    sletKontakt(deleteNumber);
+                    break;
+
+                case 5:
+                    redigerNummer();
+
+                case 0:
                     System.out.println("Telefonboget lukkes...");
                     return;
 
@@ -50,6 +60,7 @@ public class Menu {
             }
         }
     }
+
     private void addToDatabase(int nummer, String name) {
         String sql = "INSERT INTO kontakter (nummer, name) VALUES (?, ?)";
 
@@ -88,7 +99,7 @@ public class Menu {
         }
     }
 
-    public void soegContacts(String searchQuery){
+    public void soegContacts(String searchQuery) {
         String sql = "SELECT * FROM kontakter WHERE nummer = ? OR name LIKE ?";
 
         try (Connection conn = Database.getConnection();
@@ -121,6 +132,57 @@ public class Menu {
             }
 
             System.out.println("----------------------");
+
+        } catch (SQLException e) {
+            System.out.println("Fejl: " + e.getMessage());
+        }
+    }
+
+    public void sletKontakt(int deleteNumber) {
+        String sql = "DELETE FROM kontakter WHERE nummer = ?";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, deleteNumber);  // Delete by number
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Kontakt slettet!");
+            } else {
+                System.out.println("Ingen kontakt blev fundet med nummer: " + deleteNumber);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Fejl: " + e.getMessage());
+        }
+    }
+
+    public void redigerNummer() {
+        System.out.println("Indtast det gamle nummer, du vil ændre:");
+        int gammeltNummer = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.println("Indtast det nye nummer:");
+        int nytNummer = scanner.nextInt();
+        scanner.nextLine();
+
+        String sql = "UPDATE kontakter SET nummer = ? WHERE nummer = ?";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, nytNummer);
+            stmt.setInt(2, gammeltNummer);
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Telefonnummer opdateret!");
+            } else {
+                System.out.println("Ingen kontakt fundet med nummer: " + gammeltNummer);
+            }
 
         } catch (SQLException e) {
             System.out.println("Fejl: " + e.getMessage());
